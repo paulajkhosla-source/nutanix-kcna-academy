@@ -127,7 +127,7 @@ async function init() {
     notice('Choose your session while parked, then tap Play. No microphone or spoken responses are needed.');
     $('play').addEventListener('click', () => {
       if (player.status === 'playing') player.pause();
-      else { armSleep(); player.play(); notice('Listen without looking at the screen. Adjust your session only when parked.'); }
+      else { notice('Listen without looking at the screen. Adjust your session only when parked.'); armSleep(); player.play(); }
     });
     $('previous').addEventListener('click', () => selectTrack(current - 1, player.status === 'playing'));
     $('next').addEventListener('click', () => selectTrack(current + 1, player.status === 'playing'));
@@ -148,6 +148,12 @@ async function init() {
     });
     window.addEventListener('pagehide', () => { player.pause(); clearSleep(); player.cancel(); });
     void updateWake();
-  } catch { notice('The audio library could not load. Reload this page or return to the academy and sign in again.'); }
+  } catch (error) {
+    console.error('Car Mode initialization failed:', error);
+    const detail = error instanceof Error ? error.message : 'Unknown error';
+    notice(content
+      ? `The lessons loaded, but the audio player could not start (${detail}). Reload the page to retry.`
+      : `The audio library could not load (${detail}). Reload this page or return to the academy and sign in again.`);
+  }
 }
 void init();

@@ -61,7 +61,7 @@ Car routes and scripts use the same server-side authentication as the academy. N
 
 - Node integration checks cover: curriculum distribution, protected routes, valid/invalid login, forged/expired sessions, cross-origin rejection and logout.
 - Client logic tests passed: page rendering functions, scoring, 74% fail boundary, unanswered marking, simulation expiry, targeted practice, persistence and import validation/recalculation.
-- Audio engine tests cover full-bank narration, correct-answer order, thinking pauses, stale callbacks, resume, voice errors and completion. Protected audio routes and Vercel packaging are checked. Real device speech, Bluetooth and screen-lock behavior require a phone check after deployment.
+- Audio engine tests cover full-bank narration, correct-answer order, thinking pauses, stale callbacks, resume, voice errors and completion. A browser timer receiver regression check covers initial player setup, question gaps, pause/resume and track changes. Protected audio routes and Vercel packaging are checked. Real device speech, Bluetooth and screen-lock behavior require a phone check after deployment.
 - Source JavaScript syntax and Vercel function packaging checked.
 - Live browser layout/interaction and production deployment verification remain pending: the cloud browser cannot reach the local server, and Vercel requires sign-in before publishing.
 

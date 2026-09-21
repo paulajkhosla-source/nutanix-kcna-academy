@@ -31,7 +31,10 @@ export function makeTracks(content, mode = 'lessons', domain = 'all', gap = 15) 
 }
 export class SpeechPlayer {
   constructor({synth, Utterance, onChange = () => {}, onComplete = () => {},
-    setTimer = setTimeout, clearTimer = clearTimeout, now = Date.now}) {
+    // Call Window timers as global functions, never as methods on this player.
+    // Native browser timers reject the player as their receiver (Illegal invocation).
+    setTimer = (callback, delay) => setTimeout(callback, delay),
+    clearTimer = id => clearTimeout(id), now = Date.now}) {
     Object.assign(this, {synth, Utterance, onChange, onComplete, setTimer, clearTimer, now});
     this.status = 'idle'; this.index = 0; this.steps = []; this.generation = 0;
     this.rate = 1; this.voice = null; this.remaining = null; this.error = '';

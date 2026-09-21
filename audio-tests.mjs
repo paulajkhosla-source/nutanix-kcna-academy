@@ -114,3 +114,31 @@ test('car page controller loads, advances automatically, changes mode, saves and
   timer.callback(); assert.equal(get('play-label').textContent, 'Play');
   assert.match(get('notice').textContent, /timer has finished/);
 });
+
+test('browser timer receiver rules allow initial load, question gaps and pause', async () => {
+  const {default: vm} = await import('node:vm');
+  const timers = new Map(); let nextId = 0;
+  // Window timer methods reject a SpeechPlayer receiver. Node timers and the
+  // arrow-function fakes above do not, so exercise the actual default adapters.
+  function browserSetTimeout(callback, delay) {
+    if (this?.constructor?.name === 'SpeechPlayer') throw new TypeError('Illegal invocation');
+    const id = ++nextId; timers.set(id, {callback, delay}); return id;
+  }
+  function browserClearTimeout(id) {
+    if (this?.constructor?.name === 'SpeechPlayer') throw new TypeError('Illegal invocation');
+    timers.delete(id);
+  }
+  const source = fs.readFileSync(new URL('./private/audio-engine.js', import.meta.url), 'utf8').replaceAll('export ', '');
+  const context = vm.createContext({setTimeout:browserSetTimeout, clearTimeout:browserClearTimeout});
+  const BrowserPlayer = new vm.Script(`${source}\nSpeechPlayer;`).runInContext(context);
+  const speech = [];
+  const player = new BrowserPlayer({synth:{cancel() {}, speak(utterance) { speech.push(utterance); }},
+    Utterance:class { constructor(text) { this.text = text; } }});
+  player.load([{text:'Question'}, {wait:15000}, {text:'Answer'}]);
+  assert.equal(player.status, 'paused'); player.play(); speech.at(-1).onend();
+  const timer = [...timers.values()][0]; assert.equal(timer.delay, 15000);
+  player.pause(); assert.equal(timers.size, 0);
+  player.play(); [...timers.values()][0].callback();
+  assert.equal(speech.at(-1).text, 'Answer');
+  player.load([{text:'Next track'}]); assert.equal(player.status, 'paused');
+});
