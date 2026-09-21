@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node server.mjs",
-    "test": "node --test tests.mjs && node scripts/test-client.mjs",
+    "test": "node --test tests.mjs audio-tests.mjs && node scripts/test-client.mjs",
     "build": "node scripts/build-content.mjs && node scripts/build-vercel.mjs",
     "prestart": "node scripts/init-local.mjs"
   },

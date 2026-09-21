@@ -9,6 +9,7 @@ A complete, dependency-free Node.js learning application, prepared for Vercel.
 - An additional 60-question, 90-minute mixed simulation sampled from the same bank (26/17/10/7), ten-question diagnostic and targeted practice.
 - Answer explanations, flags, saved timers, automatic expiry submission, score history and 63 revision cards.
 - Four linked YouTube tutorials and four clearly labelled topic searches, plus official reading references.
+- Car Mode: spoken lessons, quick recaps and 150 audio practice questions with adjustable thinking time, voice/speed selection, auto-next, sleep timer and optional screen wake lock.
 - Four-week team study plan, exam-day checklist, local notes, progress backups and manual team-report import.
 
 ## Run locally
@@ -46,10 +47,21 @@ Public production access should reach the application's team-password screen wit
 
 Learner progress is localStorage-based, per browser profile. It does not sync to a server or between teammates. Export/import moves backups; team report import builds a local comparison table. Reports are self-reported and not identity-verified. Practice answers are available to authenticated learners for review, so this is an informal study tool, not a secure assessment system. Rate limiting is best-effort per serverless instance; a distributed limiter can be added if needed.
 
+## Car Mode
+
+Open **Car Mode** from the academy navigation, or visit `/car` after signing in. Configure the playlist while parked and tap Play. Bluetooth routing uses your phone’s normal audio output; this is a browser player, not an Android Auto or CarPlay app.
+
+Uses the browser Web Speech API and available English device voices. Voice availability and background/locked-screen playback vary by device and browser. Keep the page open; the optional screen wake lock works only where supported and while the page is visible. Some voices require a network connection. No microphone, paid speech API or extra environment variables are required. Audio is synthesized on demand; no downloadable audio files are generated.
+
+Pause/resume repeats the current sentence. Audio questions read four options, wait 8/15/25 seconds, then explain the correct answer; they do not record or score responses. The sleep timer counts wall-clock time from Play, including pauses, and resets after it expires or the playlist changes. Auto-next stops at the end of the playlist. Your place, preferences and listening history are saved under `kcna-car-mode-v1` in this browser and are separate from academy progress and its export/import backups. Reloading restores your place without starting playback.
+
+Car routes and scripts use the same server-side authentication as the academy. No extra deployment setup is needed beyond the existing `TEAM_PASSWORD` environment variable.
+
 ## Validation performed
 
-- Five Node integration checks passed: curriculum distribution, protected routes, valid/invalid login, forged/expired sessions, cross-origin rejection and logout.
+- Node integration checks cover: curriculum distribution, protected routes, valid/invalid login, forged/expired sessions, cross-origin rejection and logout.
 - Client logic tests passed: page rendering functions, scoring, 74% fail boundary, unanswered marking, simulation expiry, targeted practice, persistence and import validation/recalculation.
+- Audio engine tests cover full-bank narration, correct-answer order, thinking pauses, stale callbacks, resume, voice errors and completion. Protected audio routes and Vercel packaging are checked. Real device speech, Bluetooth and screen-lock behavior require a phone check after deployment.
 - Source JavaScript syntax and Vercel function packaging checked.
 - Live browser layout/interaction and production deployment verification remain pending: the cloud browser cannot reach the local server, and Vercel requires sign-in before publishing.
 

@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#101524"><title>Car Mode · KCNA Academy</title><link rel="stylesheet" href="/car.css"><script type="module" src="/car.js"></script></head>
+<body><main class="car-shell"><header><a href="/">← Academy</a><span>KCNA / AUDIO LEARNING</span><span class="badge">CAR MODE</span></header>
+<section class="intro"><p class="eyebrow">MAKE YOUR COMMUTE COUNT</p><h1>Eyes on the road.<br><span>Keep learning.</span></h1><p>Set up your session while parked. Then listen through your phone or car’s Bluetooth audio.</p></section>
+<p id="notice" class="notice" role="status">Loading your audio library…</p>
+<section class="player" aria-label="Audio player"><div class="player-meta"><span id="mode-label">AUDIO LESSON</span><span id="position">—</span></div><h2 id="track-title">Your next learning session</h2><p id="domain-label" class="muted"></p><progress id="progress" max="1" value="0" aria-label="Track progress"></progress><p id="status" role="status">Ready when you are</p>
+<div class="controls"><button id="previous" aria-label="Previous track" disabled><span aria-hidden="true">⏮</span><small>Previous</small></button><button id="play" class="play" disabled><span id="play-icon" aria-hidden="true">▶</span><strong id="play-label">Play</strong></button><button id="next" aria-label="Next track" disabled><span aria-hidden="true">⏭</span><small>Next</small></button></div><button id="replay" class="replay" disabled>↺ Restart this track</button>
+<p id="listened" class="muted"></p><details class="transcript"><summary>Current spoken sentence</summary><p id="transcript"></p></details></section>
+<details class="settings" open><summary>Set up your listening session <span>While parked</span></summary><div class="settings-grid">
+<label>Listen to<select id="mode"><option value="lessons">Full lessons</option><option value="recap">Quick recaps</option><option value="questions">Question & answer practice</option></select></label>
+<label>Focus area<select id="domain"><option value="all">All four exam domains</option></select></label>
+<label class="full">Start from<select id="track"></select></label>
+<label>Speaking voice<select id="voice"><option value="">Device default (English)</option></select></label>
+<label>Playback speed<select id="rate"><option value="0.8">0.8× · Relaxed</option><option value="1">1× · Normal</option><option value="1.2">1.2× · Brisk</option><option value="1.5">1.5× · Fast</option></select></label>
+<label>Thinking time for questions<select id="gap"><option value="8">8 seconds</option><option value="15" selected>15 seconds</option><option value="25">25 seconds</option></select></label>
+<label>Stop after<select id="sleep"><option value="0">End of playlist</option><option value="15">15 minutes</option><option value="30">30 minutes</option><option value="60">60 minutes</option></select></label>
+<label class="check"><input type="checkbox" id="autonext" checked> Play next track automatically</label><label class="check"><input type="checkbox" id="awake"> Keep screen awake while playing</label>
+</div><p id="wake-status" class="muted"></p></details>
+<footer><p>Keep this page open. Screen-lock and background playback depend on your browser. Pause resumes at the start of the current sentence.</p><p>Audio practice is unscored. Listening history stays in this browser, separately from lesson completion and mock exam results. Device voices may use an online speech service.</p></footer>
+</main></body></html>
