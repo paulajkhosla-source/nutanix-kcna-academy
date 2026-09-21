@@ -1,0 +1,6 @@
+import fs from 'node:fs';
+import {lessons,domains} from '../private/lessons.mjs';
+let domain=''; const qs=[];const counter={};
+for(const line of fs.readFileSync(new URL('../private/questions.txt',import.meta.url),'utf8').split('\n')){if(!line.trim())continue;if(line.startsWith('# ')){domain=line.slice(2);continue;}const p=line.split(' | ');if(p.length!==7)throw Error('Bad line '+line);const index=counter[domain]||0;counter[domain]=index+1;const per={fundamentals:22,orchestration:14,delivery:8,architecture:6}[domain];const set=Math.floor(index/per);const rotate=(qs.length*7+set)%4;const choices=p.slice(1,5);const options=[...choices.slice(rotate),...choices.slice(0,rotate)];qs.push({id:'q'+(qs.length+1),domain,set,question:p[0],options,answer:options.indexOf(p[1]),explanation:p[5],lesson:p[6]});}
+if(qs.length!==150)throw Error('Expected 150, got '+qs.length);for(let s=0;s<3;s++){if(qs.filter(q=>q.set===s).length!==50)throw Error('Set size');}for(const q of qs)if(!lessons.find(l=>l.id===q.lesson))throw Error('Lesson '+q.lesson);
+fs.writeFileSync(new URL('../private/content.json',import.meta.url),JSON.stringify({domains,lessons,questions:qs}));console.log(JSON.stringify({lessons:lessons.length,questions:qs.length,domains:counter}));

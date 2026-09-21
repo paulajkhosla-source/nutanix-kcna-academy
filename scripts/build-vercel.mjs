@@ -1,0 +1,7 @@
+import fs from 'node:fs';import crypto from 'node:crypto';import path from 'node:path';import {fileURLToPath} from 'node:url';
+if(!process.env.TEAM_PASSWORD)throw new Error('Set TEAM_PASSWORD in the Vercel project environment before building.');
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');const out=path.join(root,'.vercel/output');fs.rmSync(out,{recursive:true,force:true});const func=path.join(out,'functions/index.func');fs.mkdirSync(path.join(func,'api'),{recursive:true});fs.mkdirSync(path.join(func,'private'),{recursive:true});
+for(const f of ['app.html','app.js','style.css','content.json','videos.json'])fs.copyFileSync(path.join(root,'private',f),path.join(func,'private',f));
+const salt=crypto.randomBytes(24).toString('hex');const secret={salt,hash:crypto.scryptSync(process.env.TEAM_PASSWORD,salt,64).toString('hex'),session:crypto.randomBytes(48).toString('hex')};fs.writeFileSync(path.join(func,'private/secret.json'),JSON.stringify(secret),{mode:0o600});
+fs.copyFileSync(path.join(root,'api/index.mjs'),path.join(func,'api/index.mjs'));fs.writeFileSync(path.join(func,'package.json'),'{"type":"module"}');
+fs.writeFileSync(path.join(func,'.vc-config.json'),JSON.stringify({runtime:'nodejs22.x',handler:'api/index.mjs',launcherType:'Nodejs'}));fs.writeFileSync(path.join(out,'config.json'),JSON.stringify({version:3,routes:[{src:'/(.*)',dest:'/index'}]}));console.log('Built Vercel output: one protected function; no publicly served source or content files.');
