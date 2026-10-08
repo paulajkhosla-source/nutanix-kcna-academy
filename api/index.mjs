@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import {parseStudyLibrary} from './study-library.mjs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import {fileURLToPath} from 'node:url';
@@ -34,6 +35,10 @@ export default async function handler(req,res){
  if(route==='/style.css')return send(res,200,read('style.css'),'text/css; charset=utf-8');
  const token=req.headers.cookie?.split(';').map(s=>s.trim()).find(s=>s.startsWith('kcna_session='))?.slice(13);
  if(!tokenValid(token)){if(route==='/'||route==='/login')return send(res,200,login());return send(res,401,'Sign in required.','text/plain');}
+ if(route==='/api/study-library'){
+  try{return send(res,200,JSON.stringify(parseStudyLibrary(process.env.TEAM_STUDY_LIBRARY_JSON)),'application/json; charset=utf-8');}
+  catch{return send(res,503,JSON.stringify({error:'The study library is temporarily unavailable. Please try again later.'}),'application/json; charset=utf-8');}
+ }
  const routes={'/car':['car.html','text/html'],'/car/':['car.html','text/html'],'/car.js':['car.js','text/javascript'],'/audio-engine.js':['audio-engine.js','text/javascript'],'/car.css':['car.css','text/css'],'/':['app.html','text/html'],'/app.js':['app.js','text/javascript'],'/content.json':['content.json','application/json'],'/videos.json':['videos.json','application/json']};
  if(routes[route])return send(res,200,read(routes[route][0]),routes[route][1]+'; charset=utf-8');
  return send(res,404,'Not found','text/plain');

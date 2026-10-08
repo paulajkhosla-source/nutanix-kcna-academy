@@ -73,3 +73,18 @@ Car routes and scripts use the same server-side authentication as the academy. N
 - Official Kubernetes, CNCF, OpenGitOps and OpenTelemetry references linked with each lesson.
 
 The real exam is currently listed as a 90-minute proctored multiple-choice exam with a 75% pass mark. The mocks are our own practice formats. Suggested 85% study readiness is guidance, not a prediction or certification guarantee. This academy is not affiliated with or endorsed by CNCF or the Linux Foundation.
+
+## Supplemental Study Notes
+
+The **Study Notes** navigation item reads `/api/study-library` after the existing team sign-in. It presents full explanations and revision bullets in the academy, with search, topic filters, and a direct Knowledge Checks view. Plain-text source acknowledgements are collapsed below each note; original-material URLs are not rendered as outgoing links. The dashboard and learning path link directly to Study Notes. Optional original knowledge checks reveal an explanation when an answer is chosen; they do not change mock-exam scores or stored progress.
+
+Supply the catalogue as the sensitive **runtime** environment variable `TEAM_STUDY_LIBRARY_JSON` in the existing Vercel project, then redeploy. Do not put internal notes, shared-file contents, or the environment value in this public repository. No catalogue is bundled in the build, and an unconfigured catalogue produces a friendly empty state. The same environment variable works with the local server. The endpoint requires a valid academy session and sends `private, no-store` responses; invalid data returns a generic error without exposing the supplied value.
+
+The JSON object has these fields:
+
+- `updatedAt`: ISO date or timestamp; `summary`: introduction.
+- `notes`: `{id, title, category, body, bullets: string[], tags: string[], sources: [{label, url?}]}`. Source URLs are optional; label-only acknowledgements are supported. Separate body paragraphs with blank lines. Text is rendered as text, not HTML or Markdown.
+- `resources`: optional supporting catalogue represented as an array (use `[]` when all material is incorporated into notes); entries are `{id, title, type, author, date, description, url, access, tags: string[], status}`.
+- `questions`: optional array of `{id, noteId, prompt, options: string[], answer, explanation}`. The answer is zero-based. `noteId` is an existing note ID or an empty string. Use 2–6 distinct options. These are supplementary revision checks, not exam questions.
+
+IDs must be unique across all entries and use letters, numbers, dots, underscores or hyphens. When supplied, source URLs must be HTTPS URLs without embedded credentials. Omitted optional text and list fields default to empty values. Keep the complete environment value within Vercel's environment limits; the server separately rejects payloads over 256 KiB and malformed entries. The study data stays out of the learner's local progress export.

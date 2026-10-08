@@ -8,3 +8,28 @@ test('forged, modified and expired sessions rejected',async()=>{const cfg={sessi
 test('cross-origin login rejected and logout clears cookie',async()=>{let r=await fetch(base+'/login',{method:'POST',headers:{Origin:'https://example.com','Content-Type':'application/x-www-form-urlencoded'},body:'password=test-only-academy-password'});assert.equal(r.status,403);r=await fetch(base+'/logout',{method:'POST',headers:{cookie},redirect:'manual'});assert.equal(r.status,303);assert.ok(r.headers.get('set-cookie').includes('Max-Age=0'));});
 
 test('authenticated car mode routes serve the protected player and modules',async()=>{for(const [path,type] of [['/car','text/html'],['/car/','text/html'],['/car.js','text/javascript'],['/audio-engine.js','text/javascript'],['/car.css','text/css']]){const r=await fetch(base+path,{headers:{cookie}});assert.equal(r.status,200,path);assert.ok(r.headers.get('content-type').startsWith(type));assert.ok(r.headers.get('cache-control').includes('no-store'));assert.ok((await r.text()).length>100);}});
+
+test('study library remains private and serves injected content without caching',async()=>{
+ const prior=process.env.TEAM_STUDY_LIBRARY_JSON;
+ try{
+  process.env.TEAM_STUDY_LIBRARY_JSON=JSON.stringify({updatedAt:'2026-10-08',summary:'Test revision set',notes:[{id:'test-note',title:'Example note',category:'Concepts',body:'A private test explanation.',bullets:['First distinction'],tags:['test'],sources:[{label:'Reference',url:'https://example.com/reference'}]}],resources:[],questions:[{id:'test-check',noteId:'test-note',prompt:'Which choice?',options:['First','Second'],answer:0,explanation:'First is the test answer.'}],ignored:'not exposed'});
+  for(const headers of [{},{cookie:'kcna_session=forged'}]){const response=await fetch(base+'/api/study-library',{headers});assert.equal(response.status,401);assert.ok(!(await response.text()).includes('private test explanation'));}
+  let response=await fetch(base+'/api/study-library',{headers:{cookie}});assert.equal(response.status,200);assert.match(response.headers.get('cache-control'),/private, no-store/);assert.match(response.headers.get('content-type'),/application\/json/);const data=await response.json();assert.equal(data.notes[0].body,'A private test explanation.');assert.equal(data.questions[0].answer,0);assert.equal(data.ignored,undefined);
+  process.env.TEAM_STUDY_LIBRARY_JSON='{"notes":"private-broken-value"';response=await fetch(base+'/api/study-library',{headers:{cookie}});assert.equal(response.status,503);assert.ok(!(await response.text()).includes('private-broken-value'));
+  delete process.env.TEAM_STUDY_LIBRARY_JSON;response=await fetch(base+'/api/study-library',{headers:{cookie}});assert.equal(response.status,200);assert.deepEqual((await response.json()).notes,[]);
+ }finally{if(prior===undefined)delete process.env.TEAM_STUDY_LIBRARY_JSON;else process.env.TEAM_STUDY_LIBRARY_JSON=prior;}
+});
+
+test('study library rejects unsafe sources, malformed entries and invalid knowledge checks',async()=>{
+ const {parseStudyLibrary}=await import('./api/study-library.mjs');
+ const note={id:'example',title:'A note',body:'A concept',sources:[]};
+ const create=overrides=>JSON.stringify({notes:[note],resources:[],...overrides});
+ assert.equal(parseStudyLibrary('').configured,false);
+ assert.deepEqual(parseStudyLibrary(create({notes:[{...note,sources:[{label:'Shared study guide'}]}]})).notes[0].sources,[{label:'Shared study guide',url:''}]);
+ for(const url of ['javascript:alert(1)','data:text/html,test','http://example.com','https://user:password@example.com'])assert.throws(()=>parseStudyLibrary(create({notes:[{...note,sources:[{label:'Source',url}]}]})));
+ for(const value of ['null','[]','{}',create({notes:[note,note]}),create({notes:[{...note,title:2}]}),create({notes:[{...note,tags:['x'.repeat(101)]}]}),create({updatedAt:'not a date'}),'x'.repeat(262145)])assert.throws(()=>parseStudyLibrary(value));
+ const question={id:'check',noteId:'example',prompt:'Which one?',options:['A','B'],answer:0,explanation:'A is correct.'};
+ assert.equal(parseStudyLibrary(create({questions:[question]})).questions.length,1);
+ for(const change of [{answer:2},{answer:'0'},{options:['A','A']},{options:['A']},{noteId:'missing'},{id:'example'},{explanation:''}])assert.throws(()=>parseStudyLibrary(create({questions:[{...question,...change}]})));
+ const output=parseStudyLibrary(create({notes:[{...note,body:'<script>example</script>'}]}));assert.equal(output.notes[0].body,'<script>example</script>');
+});
