@@ -1,3 +1,6 @@
+import {gunzipSync} from 'node:zlib';
+const MAX_LIBRARY_BYTES = 262144;
+const MAX_COMPRESSED_BYTES = 196608;
 // Study content is supplied only through the server environment, never bundled.
 const emptyLibrary = () => ({configured: false, updatedAt: null, summary: '', notes: [], resources: [], questions: []});
 function text(value, name, max = 4000, required = false) {
@@ -22,8 +25,19 @@ function link(value, required = false) {
 }
 export function parseStudyLibrary(raw) {
   if (!raw || !raw.trim()) return emptyLibrary();
-  if (Buffer.byteLength(raw, 'utf8') > 262144) throw new Error('Study library is too large');
-  const value = JSON.parse(raw);
+  if (Buffer.byteLength(raw, 'utf8') > MAX_LIBRARY_BYTES) throw new Error('Study library is too large');
+  let value = JSON.parse(raw);
+  if (value && typeof value === 'object' && !Array.isArray(value) && Object.hasOwn(value, 'encoding')) {
+    if (value.encoding !== 'gzip-base64' || Object.keys(value).some(key => !['encoding', 'data'].includes(key))) throw new Error('Invalid study library encoding');
+    const encoded = value.data;
+    if (typeof encoded !== 'string' || !encoded.length || encoded.length > MAX_COMPRESSED_BYTES * 4 / 3 || encoded.length % 4 !== 0 || !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(encoded)) throw new Error('Invalid compressed study library');
+    const compressed = Buffer.from(encoded, 'base64');
+    if (compressed.length > MAX_COMPRESSED_BYTES || compressed.toString('base64') !== encoded) throw new Error('Invalid compressed study library');
+    const decoded = gunzipSync(compressed, {maxOutputLength: MAX_LIBRARY_BYTES});
+    if (decoded.length > MAX_LIBRARY_BYTES) throw new Error('Study library is too large');
+    value = JSON.parse(decoded.toString('utf8'));
+    if (value && typeof value === 'object' && Object.hasOwn(value, 'encoding')) throw new Error('Nested study library encodings are not supported');
+  }
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Invalid study library');
   if (!Array.isArray(value.notes) || !Array.isArray(value.resources)) throw new Error('Missing study library entries');
   const ids = new Set();

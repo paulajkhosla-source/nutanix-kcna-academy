@@ -33,3 +33,14 @@ test('study library rejects unsafe sources, malformed entries and invalid knowle
  for(const change of [{answer:2},{answer:'0'},{options:['A','A']},{options:['A']},{noteId:'missing'},{id:'example'},{explanation:''}])assert.throws(()=>parseStudyLibrary(create({questions:[{...question,...change}]})));
  const output=parseStudyLibrary(create({notes:[{...note,body:'<script>example</script>'}]}));assert.equal(output.notes[0].body,'<script>example</script>');
 });
+
+
+test('compressed study catalogues decode identically and reject malformed or oversized input',async()=>{
+ const {parseStudyLibrary}=await import('./api/study-library.mjs');
+ const {gzipSync}=await import('node:zlib');
+ const wrap=text=>JSON.stringify({encoding:'gzip-base64',data:gzipSync(Buffer.from(text)).toString('base64')});
+ const raw=JSON.stringify({updatedAt:'2026-10-08',summary:'A test catalogue',notes:[{id:'compressed-note',title:'Example',body:'A revision explanation.',sources:[{label:'Shared example'}]}],resources:[],questions:[{id:'compressed-check',noteId:'compressed-note',prompt:'Choose one',options:['A','B'],answer:0,explanation:'A is correct.'}]});
+ assert.deepEqual(parseStudyLibrary(wrap(raw)),parseStudyLibrary(raw));
+ for(const value of [JSON.stringify({encoding:'unknown',data:'AAAA'}),JSON.stringify({encoding:'gzip-base64',data:'not base64!'}),JSON.stringify({encoding:'gzip-base64',data:'eA=='}),JSON.stringify({encoding:'gzip-base64',data:'Zh=='}),JSON.stringify({encoding:'gzip-base64',data:'',notes:[],resources:[]}),JSON.stringify({encoding:'gzip-base64',data:'A'.repeat(262148)}),wrap('x'.repeat(262145)),wrap('invalid JSON'),wrap(JSON.stringify({encoding:'gzip-base64',data:'AAAA'}))])assert.throws(()=>parseStudyLibrary(value));
+ const envelope=JSON.parse(wrap(raw));envelope.notes=[];assert.throws(()=>parseStudyLibrary(JSON.stringify(envelope)));
+});
